@@ -25,3 +25,8 @@ Once the DOT graph of the file traversal is generated, the rest of the analysis 
 To avoid repeating analysis of the same libraries in different Images, we also maintain an SQLlite3 database that saves what system calls each library function makes and what system calls every binary makes. We use a SHA256 hash of the library or binary file as a unique identifier. So, for example, if a Docker Image uses libc-2.23 and this particular library has already been seen before, the hash of this file and the saved hash would be compared. If there is a match, the analysis will be skipped as the system calls each function makes is already known. There is a similar case for binaries. If bash-2.23 is being used and has already been analyzed, there is no need to analyze it again. This considerably speeds up the process of analysis for a Docker Image especially after several images have been analyzed.
 
 Please check out dockergate-automated-seccomp.pdf for the complete design
+
+# How to run dockergate
+
+1. Execute all the commands in install.txt to setup the environment.
+2. Run dockergate_start.sh image
