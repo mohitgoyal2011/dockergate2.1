@@ -1,3 +1,13 @@
+'''
+Graph Traversal is done once the graph within the Docker container is created. This is whree we can decide 
+how to traverse the graph created in phase 1. In this case, we are starting from red nodes and going to the individual leaves
+of the call graphs. Before this, we were going through every blue node. The former attempts to generate tighter seccomp policies.
+However, our bash analysis is super rudimentary so it doesn't work
+
+Red node : Bash script
+Blue node : Executable
+White Node : Library
+'''
 import sys,os
 import subprocess
 import logging
@@ -6,6 +16,10 @@ import json
 import networkx as nx
 lib_dict = {}
 
+
+'''
+analyze file calls classify and writes the system calls into the temp policy file.
+'''
 def analyze_file(binary, executable, linked_libraries_list):
     global lib_dict
     logging.info('******************************************************************************************************************************')
@@ -35,6 +49,11 @@ def analyze_file(binary, executable, linked_libraries_list):
 
     logging.info('******************************************************************************************************************************')
 
+'''
+Classify() first gets the said executable/bash script from the docker container, uses rahash to create a unique hash out of the file (for unique ket purposes) and passed it on to the ELFAnalysis object. 
+It returns the list of system calls that would be used in that particular executable.
+
+'''
 def classify(binary, analysis_obj, executable, image_name, linked_libraries_list):
     global lib_dict
     logging.info('Now analyzing ' + binary)
@@ -62,12 +81,13 @@ def classify(binary, analysis_obj, executable, image_name, linked_libraries_list
         return syscall_list
     return None
 
+#This gets the red nodes and executes analyze_file() on on each of its children (blue nodes - executables being called in the bash script)
 def graph_traversal(image_name):
     try:
         filename = 'graphs/' + image_name + '.dot'
         graph = nx.DiGraph(nx.nx_pydot.read_dot(filename))
         for n in graph.nodes.keys():
-            if graph.nodes[n]['color'] == 'blue':
+            if graph.nodes[n]['color'] == 'red':
                 dfs_post_order = list(nx.dfs_postorder_nodes(graph,n))
                 for f in dfs_post_order:
                     linked_lib_list = list(nx.dfs_postorder_nodes(graph,f))[:-1]

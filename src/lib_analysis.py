@@ -1,6 +1,9 @@
+'''
+The code in this file is a little tricky to document as it works on the output of radare2. So the first half of the functions are just helper functions for the sqlite3 db. The latter half invokes radare2 to analyze the executable/library function and act upon it by looking at the assembly output and working its way back up from the syscall instruction to the value in the EAX register. The paper explains the overhead logic behind this in better detail
+
+'''
 import r2pipe
 import sys,os
-import pymysql
 import sqlite3 as db
 import json
 import subprocess
@@ -8,7 +11,7 @@ import logging
 
 hash_value = None
 lib_name = None
-
+#This class is responsible for querying the database and creating a list of the systemcalls
 class ELFAnalysis:
         def __init__(self,image_name):
             database_file = os.getenv('DOCKERGATE_HOME') + '/data/database/dockergate.db'
@@ -16,7 +19,7 @@ class ELFAnalysis:
             self.r2p = None
             self.lib_list = []
             self.image_name = image_name
-            
+        '''There are two tables - "binaries" and "libraries". Both tables maintain a list of the systemcalls each function or executable can make'''    
         def insert_syscalls_into_libraries(self, syscalls, function):
             global hash_value, lib_name
             cur = self.conn.cursor()
@@ -32,7 +35,7 @@ class ELFAnalysis:
             cur.execute(cmd)
             self.conn.commit()
             logging.info(cmd)
-
+	'''Instead of using library names, the so files are hashed and those are actually used to uniquely identify a library. This function is used to query the table to get the systemcalls for a particular function'''
         def get_syscalls(self,function):
             global hash_value
             try:
@@ -55,7 +58,7 @@ class ELFAnalysis:
             except Exception as e:
                 logging.error(e)
                 return None
-
+	'''These are checks whether the library exists in the table or not'''
         def check_for_library(self,hash_value):
             try:
                 cur = self.conn.cursor()
@@ -68,7 +71,7 @@ class ELFAnalysis:
             except Exception as e:
                 logging.error(e)
                 return False
-        
+
         def check_for_binary(self,hash_value):
             try:
                 cur = self.conn.cursor()
@@ -94,7 +97,7 @@ class ELFAnalysis:
             except Exception as e:
                 logging.error('Something wrong with querying the database for binaries ' + str(e))
                 return []
-
+	'''This is the main logic as to how the systemcalls are extracted. EAX is where the systemcall value is stored before actually executing. However, in the disassembled code, the register always doesn't have that value. So have to recursively follow it'''
         def follow_eax(self,l,start,reg):
             for i in range(0,start+1)[::-1]:
                     if 'mov' in l[i] and reg in l[i]:

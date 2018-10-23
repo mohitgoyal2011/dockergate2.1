@@ -1,0 +1,5 @@
+apt-get install radare2, sqlite3, pip, docker.io, python3
+pip install r2pipe
+pip install networkx
+gpasswd -a $USER docker
+
