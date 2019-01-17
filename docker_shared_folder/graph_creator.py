@@ -78,7 +78,7 @@ def dfs_search(binary, call_graph, binary_set, executable):
         call_graph.edge(binary, lib)
     return
 FORMAT = '%(asctime)-15s %(funcName)s %(levelname)s : %(message)s'
-logging.basicConfig(filename='/test_code/output.log',level=logging.DEBUG, format=FORMAT)
+logging.basicConfig(filename='/docker_shared_folder/output.log',level=logging.DEBUG, format=FORMAT)
 rootDir = '/'
 call_graph = gv.Digraph(format='dot')
 binary_set = set()
